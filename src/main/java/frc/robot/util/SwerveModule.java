@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 
@@ -19,7 +20,9 @@ import harkerrobolib.wrappers.HSTalon;
  */
 public class SwerveModule {
 
-    //Voltage/Current Constants
+
+    private static final double ENCODERTICKS = 1024.0;
+
     private static final double VOLTAGE_COMP = 10;
 
     private static final int CURRENT_CONTINUOUS = 40;
@@ -30,15 +33,11 @@ public class SwerveModule {
     private final boolean DRIVE_INVERTED;
     private final boolean ANGLE_INVERTED;
 
-    public boolean swerveDriveInverted; // Whether the motor is inverted when turning the angle motors
-
     private final boolean DRIVE_SENSOR_PHASE;
     private final boolean ANGLE_SENSOR_PHASE;
 
     private HSTalon angleMotor;
     private HSTalon driveMotor;
-    
-    private Vector velocity;
 
     public SwerveModule(int driveId, boolean invertDriveTalon, boolean driveSensorPhase, int angleId, boolean invertAngleTalon, boolean angleSensorPhase) {
         driveMotor = new HSTalon(driveId);
@@ -113,33 +112,49 @@ public class SwerveModule {
         return driveMotor;
     }
 
-    public boolean shouldInvert(int desiredPos) {
-        return Math.abs(getAngleMotor().getSelectedSensorPosition() - desiredPos) > 90;
+    //the following code from here to the bottom has been stolen from team 364
+    //https://github.com/teamfusion364/Swerve-MiniBot/
+    //plz dont sue me thx
+    public boolean setTargetAngle(double targetAngle) {
+        boolean invertDrives;
+
+        targetAngle = modulate360(targetAngle);
+        double currentAngle = toDegrees(angleMotor.getSelectedSensorPosition(0));
+        double currentAngleMod = modulate360(currentAngle);
+        if (currentAngleMod < 0) currentAngleMod += 360;
+        double delta = currentAngleMod - targetAngle;
+        if (delta > 180) {
+            targetAngle += 360;
+        } else if (delta < -180) {
+            targetAngle -= 360;
+        }
+        delta = currentAngleMod - targetAngle;
+        if (delta > 90 || delta < -90) {
+            if (delta > 90)
+                targetAngle += 180;
+            else if (delta < -90)
+                targetAngle -= 180;
+            invertDrives = false;
+        } else {
+            invertDrives = true;
+        }
+
+        targetAngle += currentAngle - currentAngleMod;
+        targetAngle = toCounts(targetAngle);
+        getAngleMotor().set(ControlMode.Position, targetAngle);
+
+        return invertDrives;
     }
 
-    /**
-     * Sets the target angle of the swerve module.
-     * 
-     * @param targetAngle the angle (in degrees) of the setpoint
-     */
-    public void setTargetAngle(double targetAngle) {
-        // targetAngle = targetAngle % 360;
-        // targetAngle += mZeroOffset;
-        // double currentAngle = angleMotor.getSelectedSensorPosition(0) * (360.0/1024.0);
-        // double currentAngleMod = modulate360(currentAngle);
-        // if (currentAngleMod < 0) currentAngleMod += 360;
-        
-        // double delta = currentAngleMod - targetAngle;
-        // while (delta > 180) {
-        //     targetAngle += 360;
-        // }
-        // while (delta < -180) {
-        //     targetAngle -= 360;
-        // }
-       
-        // targetAngle += currentAngle - currentAngleMod;
-        // lastTargetAngle = targetAngle;
-        
-        // int rawAngle = convertDegreesToEncoder(targetAngle);
+    public static double toCounts(double units){
+        return units * ENCODERTICKS / 360.0;
+    }
+
+    public static double toDegrees(double units){
+        return units * (360 / ENCODERTICKS);
+    }
+
+    public double modulate360(double units){
+        return units %= 360;
     }
 }

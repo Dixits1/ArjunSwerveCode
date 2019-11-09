@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.robot.RobotMap;
+import frc.robot.commands.SwervePercentOutput;
 import frc.robot.commands.SwerveTest;
 import frc.robot.util.SwerveModule;
 import frc.robot.util.Vector;
@@ -27,6 +28,11 @@ public class Drivetrain extends Subsystem {
 
 	public static Drivetrain instance;
 
+	public static Vector[] rotationVectors;
+
+	public static final double DT_LENGTH = 50;
+	public static final double DT_WIDTH = 50;
+
     private SwerveModule topLeft;
     private SwerveModule topRight;
     private SwerveModule bottomLeft;
@@ -50,12 +56,13 @@ public class Drivetrain extends Subsystem {
 	private static final boolean BR_DRIVE_SENSOR_PHASE = true;
 	private static final boolean BR_ANGLE_SENSOR_PHASE = true;
 
-
 	private Drivetrain() {
 		topLeft = new SwerveModule(RobotMap.TL_DRIVE_ID, TL_DRIVE_INVERTED, TL_DRIVE_SENSOR_PHASE, RobotMap.TL_ANGLE_ID, TL_ANGLE_INVERTED, TL_ANGLE_SENSOR_PHASE);
 		topRight = new SwerveModule(RobotMap.TR_DRIVE_ID, TR_DRIVE_INVERTED, TR_DRIVE_SENSOR_PHASE, RobotMap.TR_ANGLE_ID, TR_ANGLE_INVERTED, TR_ANGLE_SENSOR_PHASE);
 		bottomLeft = new SwerveModule(RobotMap.BL_DRIVE_ID, BL_DRIVE_SENSOR_PHASE, BL_DRIVE_INVERTED, RobotMap.BL_ANGLE_ID, BL_ANGLE_INVERTED, BL_ANGLE_SENSOR_PHASE);
 		bottomRight = new SwerveModule(RobotMap.BR_DRIVE_ID, BR_DRIVE_INVERTED, BR_DRIVE_SENSOR_PHASE, RobotMap.BR_ANGLE_ID, BR_ANGLE_INVERTED, BR_ANGLE_SENSOR_PHASE);
+
+		initRotationVectors();
 	}
 
 	public SwerveModule getTopLeft() {
@@ -76,7 +83,7 @@ public class Drivetrain extends Subsystem {
 	
 	@Override
 	protected void initDefaultCommand() {
-		setDefaultCommand(new SwerveTest());
+		setDefaultCommand(new SwervePercentOutput());
 	}
 	/***
 	 * 
@@ -109,5 +116,37 @@ public class Drivetrain extends Subsystem {
 
 	public double max4(double a, double b, double c, double d) {
 		return Math.max(Math.max(a, b), Math.max(c, d));
+	}
+
+	public void initRotationVectors()
+	{
+		Vector[] vecs = new Vector[4];
+
+		for(int j = 0; j < vecs.length; j++)
+		{
+			switch(j)
+			{
+				case 0:
+					vecs[j] = new Vector(DT_WIDTH, DT_LENGTH);
+					break;
+				case 1:
+					vecs[j] = new Vector(DT_LENGTH, -DT_WIDTH);
+					break;
+				case 2:
+					vecs[j] = new Vector(-DT_WIDTH, -DT_LENGTH);
+					break;
+				case 3:
+					vecs[j] = new Vector(-DT_LENGTH, DT_WIDTH);
+					break;
+			}
+		}
+
+
+		for(Vector vec : vecs)
+		{
+			vec.scale(1/Math.max(DT_LENGTH, DT_WIDTH));
+		}
+
+		rotationVectors = vecs;
 	}
 }
