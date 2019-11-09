@@ -38,6 +38,8 @@ public class SwervePercentOutput extends IndefiniteCommand {
             
             Vector finalVector = Vector.add(rotateVector, transVector);
 
+            finalVector.scale(0.5);
+
             double newAngle = 360 - finalVector.getAngle();
             double magnitude = finalVector.getMagnitude();
             boolean invertDrives = modules[i].setTargetAngle(newAngle);

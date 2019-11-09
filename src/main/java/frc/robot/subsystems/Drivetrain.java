@@ -144,7 +144,7 @@ public class Drivetrain extends Subsystem {
 
 		for(Vector vec : vecs)
 		{
-			vec.scale(1/Math.max(DT_LENGTH, DT_WIDTH));
+			vec.scale(1.0/Math.max(DT_LENGTH, DT_WIDTH));
 		}
 
 		rotationVectors = vecs;
